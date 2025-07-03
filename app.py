@@ -44,7 +44,7 @@ labels = T[language]
 
 tabs = st.tabs([labels["split"], labels["merge"], labels["ocr"], labels["insight"]])
 
-# -------------------- Split PDF ---------------------
+# -------------------- Split PDF (Optimized for Large Files) ---------------------
 with tabs[0]:
     st.header(labels["split"])
     uploaded_file = st.file_uploader(labels["upload_pdf_split"], type=["pdf"], key="split_pdf")
@@ -52,20 +52,34 @@ with tabs[0]:
     end_page = st.number_input(labels["end_page"], min_value=1, step=1)
 
     if uploaded_file and start_page <= end_page:
-        reader = PdfReader(uploaded_file)
-        writer = PdfWriter()
-        total_pages = len(reader.pages)
-        start_idx = start_page - 1
-        end_idx = min(end_page, total_pages)
-        for i in range(start_idx, end_idx):
-            writer.add_page(reader.pages[i])
+        try:
+            uploaded_bytes = uploaded_file.read()  # read as bytes to avoid stream exhaustion
+            reader = PdfReader(io.BytesIO(uploaded_bytes))
+            total_pages = len(reader.pages)
+            start_idx = start_page - 1
+            end_idx = min(end_page, total_pages)
 
-        output = io.BytesIO()
-        writer.write(output)
-        output.seek(0)
+            if start_idx >= total_pages:
+                st.error("🚫 Start page exceeds total page count.")
+            else:
+                writer = PdfWriter()
+                for i in range(start_idx, end_idx):
+                    writer.add_page(reader.pages[i])
 
-        st.success("✅ PDF split successfully!")
-        st.download_button(labels["download_split"], data=output, file_name="split_output.pdf", mime="application/pdf")
+                output = io.BytesIO()
+                writer.write(output)
+                output.seek(0)
+
+                st.success("✅ PDF split successfully!")
+                st.download_button(
+                    label=labels["download_split"],
+                    data=output,
+                    file_name="split_output.pdf",
+                    mime="application/pdf"
+                )
+        except Exception as e:
+            st.error(f"❌ Error splitting PDF: {str(e)}")
+
 
 # -------------------- Merge PDF ---------------------
 with tabs[1]:
