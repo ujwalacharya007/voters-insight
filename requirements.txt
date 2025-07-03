@@ -1,9 +1,9 @@
 streamlit
 pandas
-pytesseract
 PyPDF2
 pypdf
 pdf2image
-pillow
+Pillow
+pytesseract
 plotly
 openpyxl

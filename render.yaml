@@ -1,9 +1,13 @@
 services:
   - type: web
-    name: pdf-insight-app
+    name: voters-insight
     env: python
-    plan: free
     buildCommand: |
-      apt-get update && apt-get install -y $(cat packages.txt)
+      apt-get update && \
+      apt-get install -y tesseract-ocr poppler-utils && \
       pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port=8080 --server.enableCORS=false
+    startCommand: streamlit run app.py --server.port=10000 --server.enableCORS=false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
+    plan: free
