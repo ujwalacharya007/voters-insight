@@ -214,5 +214,18 @@ with tabs[3]:
                 fig.add_bar(x=grouped.index, y=grouped[gender], name=gender)
             fig.update_layout(barmode='stack', title='जाति अनुसार लिङ्ग वितरण')
             st.plotly_chart(fig, use_container_width=True)
+        if st.checkbox(labels["caste_chart"]):
+            ...
+            st.plotly_chart(fig, use_container_width=True)
+
+        # 👇 NEW CHART: Gender distribution across age groups
+        if st.checkbox("📊 Gender distribution across age groups"):
+            gender_age_group = df.groupby(['Age Group', 'लिङ्ग']).size().unstack(fill_value=0)
+            fig = go.Figure()
+            for gender in gender_age_group.columns:
+                fig.add_trace(go.Bar(x=gender_age_group.index, y=gender_age_group[gender], name=gender))
+            fig.update_layout(barmode='group', title='Age Group vs Gender Distribution')
+            st.plotly_chart(fig, use_container_width=True)
+
     else:
         st.warning(labels["upload_warning"])
