@@ -1,30 +1,22 @@
-# Use the official Python base image
 FROM python:3.10-slim
 
-# Set environment variables to prevent interactive prompts
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
     tesseract-ocr \
-    libtesseract-dev \
+    tesseract-ocr-nep \
     poppler-utils \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
-
-# Copy the rest of the app
+# Copy code
 COPY . .
 
-# Expose the port Streamlit will run on
-EXPOSE 8501
+# Install Python requirements
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Command to run the app
-CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Run app
+CMD ["streamlit", "run", "app.py", "--server.port=10000", "--server.enableCORS=false"]
+

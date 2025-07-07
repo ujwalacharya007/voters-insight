@@ -104,6 +104,7 @@ with tabs[1]:
             st.error(f"❌ Error: {e}")
 
 # -------------------- OCR Extract to Excel ---------------------
+pytesseract.pytesseract.tesseract_cmd = r'C:\Users\Admin\Tesseract-OCR\Tesseract-OCR\tesseract.exe'
 with tabs[2]:
     st.header(labels["ocr"])
     uploaded_file = st.file_uploader(labels["upload_pdf_ocr"], type="pdf", key="ocr_pdf")
