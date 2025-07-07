@@ -158,9 +158,10 @@ with tabs[2]:
             st.error(f"❌ Error: {e}")
 
 # -------------------- Excel Visualization ---------------------
+# -------------------- Excel Visualization ---------------------
 with tabs[3]:
-    st.header(labels["insight"])
-    excel_file = st.file_uploader(labels["upload_excel"], type=["xlsx"], key="excel_file")
+    st.header("📊 Excel डाटा विश्लेषण")
+    excel_file = st.file_uploader("📤 Excel फाइल अपलोड गर्नुहोस्", type=["xlsx"], key="excel_file")
 
     def convert_to_nepali_number(num):
         eng = '0123456789'
@@ -183,19 +184,101 @@ with tabs[3]:
             else:
                 return '51+'
 
-        df['Age Group'] = df['उमेर'].apply(categorize_age)
+        df['उमेर समूह'] = df['उमेर'].apply(categorize_age)
         age_labels = {'<20': '२० वर्ष मुनि', '21–35': '२१ देखि ३५ वर्ष', '36–50': '३६ देखि ५० वर्ष', '51+': '५१ वर्ष माथि'}
         order = ['<20', '21–35', '36–50', '51+']
-        age_counts = df['Age Group'].value_counts().reindex(order, fill_value=0)
+        age_counts = df['उमेर समूह'].value_counts().reindex(order, fill_value=0)
 
-        if st.checkbox(labels["age_chart"]):
+        # Summary KPIs
+        कुल_व्यक्ति = len(df)
+        औसत_उमेर = round(df['उमेर'].mean(), 1)
+        पुरुष_संख्या = (df['लिङ्ग'] == 'पुरुष').sum()
+        महिला_संख्या = (df['लिङ्ग'] == 'महिला').sum()
+        अन्य_संख्या = कुल_व्यक्ति - (पुरुष_संख्या + महिला_संख्या)
+
+        st.subheader("📋 जनसंख्या विश्लेषण ड्यासबोर्ड")
+        st.markdown("""
+        यो ड्यासबोर्डले Excel बाट प्राप्त जनसंख्या विवरणलाई नेपाली भाषामा सजिलो तरिकाले प्रस्तुत गर्छ। यहाँ तपाईले:
+        - जम्मा व्यक्ति संख्या
+        - औसत उमेर
+        - लिङ्ग अनुसार वितरण
+        - उमेर समूह अनुसार लिङ्ग वितरण
+        - जाति अनुसार लिङ्ग अनुपात
+        - जाति अनुसार औसत उमेर
+        - जाति अनुसार उमेर वितरणको रेखाचित्र
+        हेर्न सक्नुहुन्छ।
+        """)
+
+        with st.container():
+            st.markdown("""
+            <style>
+            .metric-container {
+                display: flex;
+                justify-content: space-around;
+                flex-wrap: wrap;
+                padding: 20px 0;
+                background-color: #f4f6f8;
+                border-radius: 10px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                margin-bottom: 20px;
+            }
+            .metric-box {
+                text-align: center;
+                padding: 10px;
+                flex: 1 1 180px;
+                border-right: 1px solid #ddd;
+            }
+            .metric-box:last-child {
+                border-right: none;
+            }
+            .metric-title {
+                font-weight: bold;
+                font-size: 18px;
+                color: #444;
+                margin-bottom: 5px;
+            }
+            .metric-value {
+                font-size: 28px;
+                font-weight: bold;
+                color: #111;
+            }
+            </style>
+            <div class="metric-container">
+                <div class="metric-box">
+                    <div class="metric-title">🧍 जम्मा व्यक्ति</div>
+                    <div class="metric-value">""" + convert_to_nepali_number(कुल_व्यक्ति) + """</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-title">📊 औसत उमेर</div>
+                    <div class="metric-value">""" + convert_to_nepali_number(औसत_उमेर) + """</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-title">👨‍🦱 पुरुष</div>
+                    <div class="metric-value">""" + convert_to_nepali_number(पुरुष_संख्या) + """</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-title">👩‍🦱 महिला</div>
+                    <div class="metric-value">""" + convert_to_nepali_number(महिला_संख्या) + """</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-title">🧑 अन्य</div>
+                    <div class="metric-value">""" + convert_to_nepali_number(अन्य_संख्या) + """</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Visualization Placeholders
+        st.markdown("### 🔍 थप विवरण हेर्नका लागि तलका विकल्पहरू चयन गर्नुहोस्:")
+
+        if st.checkbox("📈 उमेर समूह अनुसार वितरण"):
             labels_nep = [age_labels[label] for label in order]
             hover = [f"{age_labels[label]}<br>({convert_to_nepali_number(count)} जनसंख्या)" for label, count in zip(order, age_counts)]
             fig = go.Figure(data=[go.Pie(labels=labels_nep, values=age_counts.values, hovertext=hover, hoverinfo="text", textinfo='percent+label')])
+            fig.update_layout(title="उमेर समूह अनुसार वितरण")
             st.plotly_chart(fig, use_container_width=True)
 
-        if st.checkbox(labels["gender_chart"]):
-            gender_chart = st.radio(labels["gender_chart_type"], ["Pie Chart", "Bar Chart"], horizontal=True)
+        if st.checkbox("🧑‍🤝‍🧑 लिङ्ग अनुसार वितरण"):
+            gender_chart = st.radio("चार्ट प्रकार", ["Pie Chart", "Bar Chart"], horizontal=True)
             gender_counts = df['लिङ्ग'].value_counts()
             labels_g = gender_counts.index.tolist()
             values = gender_counts.values.tolist()
@@ -203,10 +286,11 @@ with tabs[3]:
                 fig = go.Figure(data=[go.Pie(labels=labels_g, values=values)])
             else:
                 fig = go.Figure(data=[go.Bar(x=labels_g, y=values)])
+            fig.update_layout(title="लिङ्ग अनुसार वितरण")
             st.plotly_chart(fig, use_container_width=True)
 
-        if st.checkbox(labels["caste_chart"]):
-            top_n = st.slider("Top N Castes:", 5, 50, 10)
+        if st.checkbox("🏷️ जाति अनुसार लिङ्ग वितरण"):
+            top_n = st.slider("शीर्ष जातिहरूको संख्या छान्नुहोस्:", 5, 50, 10)
             top_castes = df['जाति'].value_counts().head(top_n).index.tolist()
             grouped = df[df['जाति'].isin(top_castes)].groupby(['जाति', 'लिङ्ग']).size().unstack(fill_value=0)
             fig = go.Figure()
@@ -214,6 +298,42 @@ with tabs[3]:
                 fig.add_bar(x=grouped.index, y=grouped[gender], name=gender)
             fig.update_layout(barmode='stack', title='जाति अनुसार लिङ्ग वितरण')
             st.plotly_chart(fig, use_container_width=True)
-            
+
+        if st.checkbox("📊 उमेर समूह अनुसार लिङ्ग वितरण"):
+            gender_age_group = df.groupby(['उमेर समूह', 'लिङ्ग']).size().unstack(fill_value=0)
+            fig = go.Figure()
+            for gender in gender_age_group.columns:
+                fig.add_trace(go.Bar(x=gender_age_group.index, y=gender_age_group[gender], name=gender))
+            fig.update_layout(barmode='group', title='उमेर समूह अनुसार लिङ्ग वितरण')
+            st.plotly_chart(fig, use_container_width=True)
+
+        if st.checkbox("📏 जाति अनुसार औसत उमेर"):
+            top_castes = df['जाति'].value_counts().head(10).index
+            avg_age = df[df['जाति'].isin(top_castes)].groupby('जाति')['उमेर'].mean().sort_values()
+            fig = go.Figure([go.Bar(x=avg_age.index, y=avg_age.values)])
+            fig.update_layout(title="जाति अनुसार औसत उमेर", yaxis_title="औसत उमेर")
+            st.plotly_chart(fig, use_container_width=True)
+
+        if st.checkbox("⚖️ जाति अनुसार लिङ्ग प्रतिशत"):
+            top_castes = df['जाति'].value_counts().head(10).index
+            grouped = df[df['जाति'].isin(top_castes)].groupby(['जाति', 'लिङ्ग']).size().unstack(fill_value=0)
+            grouped['Total'] = grouped.sum(axis=1)
+            grouped['% महिला'] = (grouped['महिला'] / grouped['Total']) * 100
+            grouped['% पुरुष'] = (grouped['पुरुष'] / grouped['Total']) * 100
+            fig = go.Figure()
+            fig.add_trace(go.Bar(x=grouped.index, y=grouped['% महिला'], name='% महिला'))
+            fig.add_trace(go.Bar(x=grouped.index, y=grouped['% पुरुष'], name='% पुरुष'))
+            fig.update_layout(barmode='stack', title="जाति अनुसार लिङ्ग प्रतिशत")
+            st.plotly_chart(fig, use_container_width=True)
+
+        if st.checkbox("📈 जाति अनुसार उमेर वितरण"):
+            age_line = df.groupby(['उमेर', 'जाति']).size().reset_index(name='count')
+            fig = go.Figure()
+            for caste in age_line['जाति'].unique():
+                sub_data = age_line[age_line['जाति'] == caste]
+                fig.add_trace(go.Scatter(x=sub_data['उमेर'], y=sub_data['count'], mode='lines+markers', name=caste))
+            fig.update_layout(title='जाति अनुसार उमेर वितरण', xaxis_title='उमेर', yaxis_title='संख्या')
+            st.plotly_chart(fig, use_container_width=True)
+
     else:
-        st.warning(labels["upload_warning"])
+        st.warning("कृपया 'उमेर', 'लिङ्ग', 'जाति' भएका Excel फाइल अपलोड गर्नुहोस्।")
